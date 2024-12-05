@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
-from pmdarima import auto_arima
+from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
 
 # App Title
@@ -35,12 +35,16 @@ if uploaded_file:
     plt.tight_layout()
     st.pyplot(fig)
 
-    # ARIMA Model Suggestion
+    # ARIMA Model Suggestion using Statsmodels
     st.write("### ARIMA Model Suggestion")
-    with st.spinner("Finding the best ARIMA parameters..."):
-        arima_model = auto_arima(time_series, seasonal=True, m=12, trace=True, error_action='ignore', suppress_warnings=True)
-        st.write("Suggested ARIMA Order (p, d, q):", arima_model.order)
-        st.write("Suggested Seasonal Order (P, D, Q, m):", arima_model.seasonal_order)
+    st.write("Fitting ARIMA model with different parameters...")
+    
+    # Use statsmodels ARIMA instead of pmdarima
+    arima_order = (1, 1, 1)  # Example order, you can modify this as needed
+    arima_model = ARIMA(time_series, order=arima_order)
+    arima_model_fit = arima_model.fit()
+
+    st.write("Suggested ARIMA Order (p, d, q):", arima_order)
 
     # Prophet Forecasting
     st.write("### Prophet Forecasting")
@@ -55,14 +59,13 @@ if uploaded_file:
         if model_choice == "ARIMA":
             st.write("### ARIMA Forecast")
             with st.spinner("Generating forecast using ARIMA..."):
-                forecast, conf_int = arima_model.predict(n_periods=forecast_steps, return_conf_int=True)
+                # Generate forecast using ARIMA model
+                forecast = arima_model_fit.forecast(steps=forecast_steps)
                 forecast_index = pd.date_range(time_series.index[-1], periods=forecast_steps + 1, freq="M")[1:]
 
                 # Create a DataFrame for ARIMA forecast
                 forecast_df = pd.DataFrame({
-                    "Forecast": forecast,
-                    "Lower Bound": conf_int[:, 0],
-                    "Upper Bound": conf_int[:, 1]
+                    "Forecast": forecast
                 }, index=forecast_index)
 
                 st.write(forecast_df)
@@ -71,10 +74,6 @@ if uploaded_file:
                 plt.figure(figsize=(10, 6))
                 plt.plot(time_series, label="Original Time Series")
                 plt.plot(forecast_df.index, forecast_df["Forecast"], label="ARIMA Forecast", color="red")
-                plt.fill_between(forecast_df.index, 
-                                 forecast_df["Lower Bound"], 
-                                 forecast_df["Upper Bound"], 
-                                 color='pink', alpha=0.3, label="Confidence Interval")
                 plt.legend()
                 plt.title("ARIMA Forecast")
                 st.pyplot(plt)
