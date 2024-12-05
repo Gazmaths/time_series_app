@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
-
 
 # App Title
 st.title("Time Series Analysis and Forecasting App")
@@ -52,34 +52,25 @@ if uploaded_file:
         plt.tight_layout()
         st.pyplot(fig)
 
-        # ARIMA Model Suggestion
-        st.write("### ARIMA Model Suggestion")
-        with st.spinner("Finding the best ARIMA parameters..."):
-            arima_model = auto_arima(time_series, seasonal=True, m=12, trace=True, error_action='ignore', suppress_warnings=True)
-            st.write("Suggested ARIMA Order (p, d, q):", arima_model.order)
-            st.write("Suggested Seasonal Order (P, D, Q, m):", arima_model.seasonal_order)
+        # ARIMA Model
+        st.write("### ARIMA Forecast")
+        arima_order = st.sidebar.text_input("Enter ARIMA order (p,d,q) as a tuple", "(1,1,1)")
 
-        # Prophet Forecasting
-        st.write("### Prophet Forecasting")
-        # Prepare data for Prophet
-        prophet_data = data.reset_index()
-        prophet_data.columns = ['ds', 'y']  # Prophet expects columns named 'ds' (datetime) and 'y' (values)
+        try:
+            arima_order = eval(arima_order)  # Convert string input to tuple (p,d,q)
+            if isinstance(arima_order, tuple) and len(arima_order) == 3:
+                with st.spinner("Fitting ARIMA model..."):
+                    arima_model = ARIMA(time_series, order=arima_order)
+                    arima_fit = arima_model.fit()
 
-        forecast_steps = st.sidebar.number_input("Number of steps to forecast", min_value=1, value=12)
-        model_choice = st.sidebar.radio("Choose a Model for Forecasting", ["ARIMA", "Prophet"])
-
-        if st.sidebar.button("Generate Forecast"):
-            if model_choice == "ARIMA":
-                st.write("### ARIMA Forecast")
-                with st.spinner("Generating forecast using ARIMA..."):
-                    forecast, conf_int = arima_model.predict(n_periods=forecast_steps, return_conf_int=True)
+                    # Forecasting
+                    forecast_steps = st.sidebar.number_input("Number of steps to forecast", min_value=1, value=12)
+                    forecast = arima_fit.forecast(steps=forecast_steps)
                     forecast_index = pd.date_range(time_series.index[-1], periods=forecast_steps + 1, freq="M")[1:]
 
                     # Create a DataFrame for ARIMA forecast
                     forecast_df = pd.DataFrame({
-                        "Forecast": forecast,
-                        "Lower Bound": conf_int[:, 0],
-                        "Upper Bound": conf_int[:, 1]
+                        "Forecast": forecast
                     }, index=forecast_index)
 
                     st.write(forecast_df)
@@ -88,15 +79,27 @@ if uploaded_file:
                     plt.figure(figsize=(10, 6))
                     plt.plot(time_series, label="Original Time Series")
                     plt.plot(forecast_df.index, forecast_df["Forecast"], label="ARIMA Forecast", color="red")
-                    plt.fill_between(forecast_df.index, 
-                                     forecast_df["Lower Bound"], 
-                                     forecast_df["Upper Bound"], 
-                                     color='pink', alpha=0.3, label="Confidence Interval")
                     plt.legend()
                     plt.title("ARIMA Forecast")
                     st.pyplot(plt)
 
-            elif model_choice == "Prophet":
+            else:
+                st.error("Invalid ARIMA order. Please enter a tuple of the form (p,d,q).")
+
+        except Exception as e:
+            st.error(f"Error fitting ARIMA model: {str(e)}")
+
+        # Prophet Forecasting
+        st.write("### Prophet Forecast")
+        # Prepare data for Prophet
+        prophet_data = data.reset_index()
+        prophet_data.columns = ['ds', 'y']  # Prophet expects columns named 'ds' (datetime) and 'y' (values)
+
+        forecast_steps = st.sidebar.number_input("Number of steps to forecast (Prophet)", min_value=1, value=12)
+        model_choice = st.sidebar.radio("Choose a Model for Forecasting", ["Prophet"])
+
+        if st.sidebar.button("Generate Prophet Forecast"):
+            if model_choice == "Prophet":
                 st.write("### Prophet Forecast")
                 with st.spinner("Generating forecast using Prophet..."):
                     # Fit Prophet model
