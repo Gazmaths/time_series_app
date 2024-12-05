@@ -1,6 +1,6 @@
 streamlit
-numpy==1.21.6
-pmdarima==1.8.5
+numpy
+pmdarima
 scipy
 Cython
 pandas
