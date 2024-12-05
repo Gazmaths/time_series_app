@@ -1,8 +1,9 @@
 streamlit
 numpy==1.21.6
-pmdarima==1.8.5
 pandas
 matplotlib
 scipy
+pmdarima==1.8.5
 Cython
-prophet
+prophet==1.1
+
