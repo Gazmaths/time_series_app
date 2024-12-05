@@ -1,9 +1,10 @@
-streamlit==1.40.2
-numpy>=1.22.0
+streamlit
+numpy
 pandas
 matplotlib
-scipy
+statsmodels
 pmdarima
 prophet
-Cython
-
+scikit-learn
+pystan
+cmdstanpy
