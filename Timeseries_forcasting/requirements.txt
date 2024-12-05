@@ -1,9 +1,6 @@
 streamlit
-numpy
 pandas
+numpy
 matplotlib
 statsmodels
-pmdarima
 prophet
-scikit-learn
-pystan
