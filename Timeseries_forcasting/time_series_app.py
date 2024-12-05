@@ -96,9 +96,9 @@ if uploaded_file:
         prophet_data.columns = ['ds', 'y']  # Prophet expects columns named 'ds' (datetime) and 'y' (values)
 
         forecast_steps = st.sidebar.number_input("Number of steps to forecast (Prophet)", min_value=1, value=12)
-        model_choice = st.sidebar.radio("Choose a Model for Forecasting", ["Prophet"])
+        model_choice = st.sidebar.radio("Choose a Model for Forecasting", ["ARIMA", "Prophet"])
 
-        if st.sidebar.button("Generate Prophet Forecast"):
+        if st.sidebar.button("Generate Forecast"):
             if model_choice == "Prophet":
                 st.write("### Prophet Forecast")
                 with st.spinner("Generating forecast using Prophet..."):
@@ -107,7 +107,7 @@ if uploaded_file:
                     prophet_model.fit(prophet_data)
 
                     # Create a DataFrame for future dates
-                    future = prophet_model.make_future_dataframe(periods=forecast_steps, freq='M')
+                    future = prophet_model.make_future_dataframe(prophet_data, periods=forecast_steps, freq='M')
                     forecast = prophet_model.predict(future)
 
                     # Display forecast
