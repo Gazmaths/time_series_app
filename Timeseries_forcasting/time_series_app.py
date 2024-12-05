@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
 from prophet import Prophet
-from pmdarima import auto_arima
+
 
 # App Title
 st.title("Time Series Analysis and Forecasting App")
